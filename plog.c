@@ -89,13 +89,13 @@ int main(int argc, char const *argv[]) {
 
       if (regexec(&re_log, buf, 0, NULL, 0) == 0) {
         printf("Log path: %s\n", buf);
-        memset(&buf[0], 0, sizeof(buf));
-        free(namelist[i]);
       }
+      free(namelist[i]);
+      memset(&linkpath[0], 0, sizeof(linkpath));
+      memset(&buf[0], 0, sizeof(buf));
     }
   free(namelist);
   }
-  memset(&linkpath[0], 0, sizeof(linkpath));
   memset(&fullpath[0], 0, sizeof(fullpath));
 
   return 0;
