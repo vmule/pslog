@@ -67,13 +67,13 @@ int main(int argc, char const *argv[]) {
   DIR *proc_dir;
 
   if (argv[1][0] != '/') {
-    strcpy(fullpath, "/proc/");
-    strcat(fullpath, argv[1]);
-    strcat(fullpath, "/fd/");
+    strncpy(fullpath, "/proc/", PATH_MAX);
+    strncat(fullpath, argv[1], PATH_MAX - strlen(fullpath));
+    strncat(fullpath, "/fd/", PATH_MAX - strlen(fullpath));
   }
   else {
-    strcpy(fullpath, argv[1]);
-    strcat(fullpath, "/fd/");
+    strncpy(fullpath, argv[1], PATH_MAX);
+    strncat(fullpath, "/fd/", PATH_MAX - strlen(fullpath));
   }
 
   printf("Pid no %s:\n", argv[1]);
@@ -82,8 +82,8 @@ int main(int argc, char const *argv[]) {
     perror("opendir PID dir: ");
   }
   while((namelist = readdir(proc_dir))) {
-    strcpy(linkpath, fullpath);
-    strcat(linkpath, namelist->d_name);
+    strncpy(linkpath, fullpath, PATH_MAX);
+    strncat(linkpath, namelist->d_name, PATH_MAX - strlen(linkpath));
     readlink(linkpath, buf, PATH_MAX -1);
 
     if (regexec(&re_log, buf, 0, NULL, 0) == 0) {
