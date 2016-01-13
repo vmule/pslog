@@ -80,7 +80,7 @@ int main(int argc, char const *argv[]) {
   proc_dir = opendir(fullpath);
   if (!proc_dir) {
     perror("opendir PID dir: ");
-    return 1;
+    exit(1);
   }
   while((namelist = readdir(proc_dir))) {
     strncpy(linkpath, fullpath, PATH_MAX);
@@ -95,5 +95,5 @@ int main(int argc, char const *argv[]) {
   }
   memset(&fullpath[0], 0, sizeof(fullpath));
   regfree(&re_log);
-  return 0;
+  exit(0);
 }
