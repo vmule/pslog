@@ -40,7 +40,7 @@ int main(int argc, char const *argv[]) {
   regcomp(&re_pid, "^((/proc/+)?[1-9][0-9]*|-V|--version)$",
           REG_EXTENDED|REG_NOSUB);
 
-  else if (regexec(&re_pid, argv[1], 0, NULL, 0) != 0) {
+  if (regexec(&re_pid, argv[1], 0, NULL, 0) != 0) {
      printf("plog: invalid process id: %s\n", argv[1]);
      exit(1);
   }
