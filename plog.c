@@ -22,7 +22,6 @@ int main(int argc, char const *argv[]) {
   float version = 1.0;
   regex_t re_log;
   regex_t re_pid;
-  int i;
 
   if (argc < 2) {
     printf("Usage: plog pid...\n");
@@ -41,19 +40,16 @@ int main(int argc, char const *argv[]) {
   regcomp(&re_pid, "^((/proc/+)?[1-9][0-9]*|-V|--version)$",
           REG_EXTENDED|REG_NOSUB);
 
-  for (i = 1; i < argc; i++) {
-    if (regexec(&re_pid, argv[i], 0, NULL, 0) != 0) {
-      printf("plog: invalid process id: %s\n", argv[i]);
-      exit(1);
-    }
-    if (!strcmp("-V", argv[i]) || !strcmp("--version", argv[i])) {
-      printf("plog version: %.1f\n", version);
-      exit(0);
-    }
+  else if (regexec(&re_pid, argv[1], 0, NULL, 0) != 0) {
+     printf("plog: invalid process id: %s\n", argv[1]);
+     exit(1);
+  }
+  else if (!strcmp("-V", argv[1]) || !strcmp("--version", argv[1])) {
+    printf("plog version: %.1f\n", version);
+    exit(0);
   }
 
   regfree(&re_pid);
-
   regcomp(&re_log, "^(.*log)$",REG_EXTENDED|REG_NOSUB);
 
   /*At this point, all arguments are in the form /proc/nnnn
@@ -70,11 +66,10 @@ int main(int argc, char const *argv[]) {
     strncpy(fullpath, "/proc/", PATH_MAX);
     strncat(fullpath, argv[1], PATH_MAX - strlen(fullpath));
     strncat(fullpath, "/fd/", PATH_MAX - strlen(fullpath));
-  }
-  else {
-    strncpy(fullpath, argv[1], PATH_MAX);
-    strncat(fullpath, "/fd/", PATH_MAX - strlen(fullpath));
-  }
+  } else {
+      strncpy(fullpath, argv[1], PATH_MAX);
+      strncat(fullpath, "/fd/", PATH_MAX - strlen(fullpath));
+    }
 
   printf("Pid no %s:\n", argv[1]);
   proc_dir = opendir(fullpath);
@@ -82,6 +77,7 @@ int main(int argc, char const *argv[]) {
     perror("opendir PID dir: ");
     exit(1);
   }
+
   while((namelist = readdir(proc_dir))) {
     strncpy(linkpath, fullpath, PATH_MAX);
     strncat(linkpath, namelist->d_name, PATH_MAX - strlen(linkpath));
