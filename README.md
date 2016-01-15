@@ -3,7 +3,7 @@ PLOG(1) User Commands.
 
 **NAME**
 
-plog - report current logs path of a process
+plog - report current logs path of a process.
 
 **SYNOPSIS**
 
