@@ -77,12 +77,13 @@ int main(int argc, char const *argv[]) {
       strncat(fullpath, "/fd/", PATH_MAX - strlen(fullpath));
     }
 
-  printf("Pid no %s:\n", argv[1]);
   proc_dir = opendir(fullpath);
   if (!proc_dir) {
     perror("opendir PID dir: ");
     exit(1);
   }
+
+  printf("Pid no %s:\n", argv[1]);
 
   while((namelist = readdir(proc_dir))) {
     strncpy(linkpath, fullpath, PATH_MAX);
