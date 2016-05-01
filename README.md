@@ -1,5 +1,6 @@
-PSLOG(1) User Commands.
+pslog 
 =====
+Part of [psmisc](https://gitlab.com/psmisc/psmisc) project, a package of small utilities that use the proc file-system.
 
 **NAME**
 
