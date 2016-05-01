@@ -1,14 +1,23 @@
 /*
- * plog.c - print process log paths.
- * Copyright 2015 Vito Mule'
- * This file may be used subject to the terms and conditions of the
- * GNU Library General Public License Version 2 as published by the
- * Free Software Foundation.This program is distributed in the hope
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the
- * implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE. See the GNU Library General Public License for more
- * details.
+ * pslog.c - print process log paths.
+ *
+ * Copyright (C) 2015 Vito Mule'
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
 
 #include <dirent.h>
 #include <errno.h>
@@ -20,14 +29,40 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-int main(int argc, char const *argv[]) {
-  float version = 1.0;
+char* VERSION = "1.0";
+
+static int
+usage ()
+{
+  fprintf(stderr,
+    "Usage: pslog PID...\n"
+    "       pslog -V, --version\n\n"
+
+    "  -V,--version display version information\n\n");
+  exit(255);
+}
+
+void
+print_version()
+{
+  fprintf(stderr, "pslog (PSmisc) %s\n", VERSION);
+  fprintf(stderr,
+    "Copyright (C) 2015-2016 Vito Mule'.\n\n");
+  fprintf(stderr,
+    "PSmisc comes with ABSOLUTELY NO WARRANTY.\n"
+    "This is free software, and you are welcome to redistribute it under\n"
+    "the terms of the GNU General Public License.\n"
+    "For more information about these matters, see the files named COPYING.\n");
+}
+
+int
+main(int argc, char const *argv[])
+{
   regex_t re_log;
   regex_t re_pid;
 
   if (argc < 2) {
-    printf("Usage: plog pid...\n");
-    exit(255);
+    usage();
   }
 
   /*
@@ -45,12 +80,12 @@ int main(int argc, char const *argv[]) {
           REG_EXTENDED|REG_NOSUB);
 
   if (regexec(&re_pid, argv[1], 0, NULL, 0) != 0) {
-     printf("plog: invalid process id: %s\n", argv[1]);
-     exit(1);
+     fprintf(stderr, "pslog: invalid process id: %s\n\n", argv[1]);
+     usage();
   }
   else if (!strcmp("-V", argv[1]) || !strcmp("--version", argv[1])) {
-    printf("plog version: %.1f\n", version);
-    exit(0);
+    print_version();
+    return 0;
   }
 
   regfree(&re_pid);
@@ -63,10 +98,22 @@ int main(int argc, char const *argv[]) {
    */
 
   struct dirent *namelist;
+
   char* fullpath = (char*) malloc(PATH_MAX+1);
+  if (!fullpath) {
+    perror ("malloc");
+    return 1;
+  }
+
   char* linkpath = (char*) malloc(PATH_MAX+1);
+  if (!linkpath) {
+    perror ("malloc");
+    return 1;
+  }
+
+  ssize_t linkname_size;
   char buf[PATH_MAX+1];
-  DIR *proc_dir;
+  DIR *pid_dir;
 
   if (argv[1][0] != '/') {
     strncpy(fullpath, "/proc/", PATH_MAX);
@@ -77,26 +124,35 @@ int main(int argc, char const *argv[]) {
       strncat(fullpath, "/fd/", PATH_MAX - strlen(fullpath));
     }
 
-  proc_dir = opendir(fullpath);
-  if (!proc_dir) {
-    perror("opendir PID dir: ");
-    exit(1);
+  pid_dir = opendir(fullpath);
+  if (!pid_dir) {
+    perror("opendir");
+    return 1;
   }
 
-  printf("Pid no %s:\n", argv[1]);
+  fprintf(stdout, "Pid no %s:\n", argv[1]);
 
-  while((namelist = readdir(proc_dir))) {
+  while((namelist = readdir(pid_dir))) {
     strncpy(linkpath, fullpath, PATH_MAX);
     strncat(linkpath, namelist->d_name, PATH_MAX - strlen(linkpath));
-    readlink(linkpath, buf, PATH_MAX -1);
+    linkname_size = readlink(linkpath, buf, PATH_MAX -1);
+    buf[linkname_size+1] = '\0';
 
     if (regexec(&re_log, buf, 0, NULL, 0) == 0) {
-      printf("Log path: %s\n", buf);
+      fprintf(stdout, "Log path: %s\n", buf);
     }
-    memset(&linkpath[0], 0, sizeof(linkpath));
+    memset(&linkpath[0], 0, sizeof(*linkpath));
     memset(&buf[0], 0, sizeof(buf));
   }
-  memset(&fullpath[0], 0, sizeof(fullpath));
+
+  free(linkpath);
+  free(fullpath);
   regfree(&re_log);
-  exit(0);
+
+  if (closedir(pid_dir)) {
+    perror ("closedir");
+    return 1;
+  }
+
+  return 0;
 }
